@@ -5,8 +5,7 @@
 # https://docs.docker.com/engine/reference/builder/
 
 ARG PYTHON_VERSION=3.10.5
-ARG PORT=80
-FROM python:${PYTHON_VERSION} as base
+FROM python:${PYTHON_VERSION}-slim as base
 
 # Install Rust compiler
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
@@ -29,11 +28,14 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     --mount=type=bind,source=requirements.txt,target=requirements.txt \
     python -m pip install -r requirements.txt
 
+#install pytorch
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 # Copy the source code into the container.
 COPY . .
 
 # Expose the port that the application listens on.
-EXPOSE ${PORT}
+EXPOSE 8000
 
 # Run the application.
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT}
+CMD uvicorn main:app --host 0.0.0.0 --port 8000
