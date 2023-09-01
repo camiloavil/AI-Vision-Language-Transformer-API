@@ -1,10 +1,39 @@
-# FROM python:3.9-slim
-FROM python:3.9
+# syntax=docker/dockerfile:1
+
+# Comments are provided throughout this file to help you get started.
+# If you need more help, visit the Dockerfile reference guide at
+# https://docs.docker.com/engine/reference/builder/
+
+ARG PYTHON_VERSION=3.10.5
+ARG PORT=80
+FROM python:${PYTHON_VERSION} as base
+
+# Install Rust compiler
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Prevents Python from writing pyc files.
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Keeps Python from buffering stdout and stderr to avoid situations where
+# the application crashes without emitting any logs due to buffering.
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
-COPY requirements.txt .
-# RUN apt-get update && apt-get install libgl1 libglib2.0-0 -y
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
-# COPY . .
-# CMD bash -c "while true; do sleep 1; done"
-# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
+
+# Download dependencies as a separate step to take advantage of Docker's caching.
+# Leverage a cache mount to /root/.cache/pip to speed up subsequent builds.
+# Leverage a bind mount to requirements.txt to avoid having to copy them into
+# into this layer.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    --mount=type=bind,source=requirements.txt,target=requirements.txt \
+    python -m pip install -r requirements.txt
+
+# Copy the source code into the container.
+COPY . .
+
+# Expose the port that the application listens on.
+EXPOSE ${PORT}
+
+# Run the application.
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT}

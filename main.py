@@ -15,7 +15,6 @@ def ask(text: str, image: UploadFile):
     content = image.file.read()
     image = Image.open(io.BytesIO(content))
     # image = Image.open(image.file)
-    
     result = model_ask(text= text, image= image)
     return {"answer": result}
     
