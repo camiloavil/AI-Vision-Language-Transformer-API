@@ -24,13 +24,20 @@ WORKDIR /app
 # Leverage a cache mount to /root/.cache/pip to speed up subsequent builds.
 # Leverage a bind mount to requirements.txt to avoid having to copy them into
 # into this layer.
-RUN --mount=type=cache,target=/root/.cache/pip \
-    --mount=type=bind,source=requirements.txt,target=requirements.txt \
-    python -m pip install -r requirements.txt
+#RUN --mount=type=cache,target=/root/.cache/pip \
+#    --mount=type=bind,source=requirements.txt,target=requirements.txt \
+#    python -m pip install -r requirements.txt
 
-#install pytorch
-RUN --mount=type=cache,target=/root/.cache/pip \
-    python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+#install pytorch CPU version https://pytorch.org/
+#RUN --mount=type=cache,target=/root/.cache/pip \
+#    python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# Install Python dependencies common way.
+RUN  --mount=type=bind,source=requirements.txt,target=requirements.txt \
+    pip install --no-cache-dir --upgrade -r requirements.txt
+
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
 # Copy the source code into the container.
 COPY . .
 
